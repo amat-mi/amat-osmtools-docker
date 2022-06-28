@@ -1,0 +1,4 @@
+**/env-*.txt
+/container/osm2pgrouting
+/container/osmupdate
+/container/osmconvert
