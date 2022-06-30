@@ -1,21 +1,23 @@
 # Introduction
 
-OSM "base" data is downloaded from a remote source.
-It is __highly__ recommended to use a source where portions of the world are already cut out.
+This repository is about retrieving data from OSM and storing it inside a local PostGIS database for purposes such as to keap a local copy of OSM data up to date, or deriving a routable road network.
 
-From this "base", data for a single "area", delimited by a boundaries rectangle, is cut out.
+It uses two Docker containers, one for building binaries of needed tools out of their source code ("builder/Dockerfile"), and the other one for running all relevant scripts and tools ("container/Dockerfile").
+Using Docker containers abstracts local machines differences and let the scripts and tools run inside a known Linux environment, even on Windows machines.
 
-Data of each "area" is stored inside a specific PostGIS database, in "public" schema.
+Inside the run time container a non volatile data volume is created (mounted on "/amat-osmtools-data") to store OSM data between one invocation of a run time script and the following one, so that base OSM data has not to be dowloaded each time.
 
-Copy provided sample file:
+A few scripts, for Windows and Linux, are provided to be run inside the local machine and a few more, Linux only, to be run inside the run time container.
 
-    env.txt.sample
+For each area of interest an env file must be created with all relevant parameters (see the provided __env.txt.sample__ file).
 
-to a new file with a meaningful name, for example:
+OSM base data is downloaded from a remote source and it is __highly__ recommended to choose a source where portions of the world are already cut out, by specifying its URL inside the env file by means of the __BASEOSM_URL__ parameter.
 
-    env-milano.txt
+From this base data, multiple area data can be cut out, by means of the __AREA_BOUNDS__ parameter.
 
-and edit this new file, setting all needed values.
+Each env file has to be relative to a single area of interest, and a different __DB_NAME__ must be specified for each of them, because the data of each area is stored inside a specific PostGIS database, always in "public" schema.
+
+At the same manner, a different __AREA_NAME__ parameter must be specified inside each env file, because area data is stored inside the container with a file name constructed out of that parameter value.
 
 # Installation
 
@@ -27,7 +29,7 @@ Clone this repository into any directory on the machine where Docker is installe
 
 ## Linux
 
-Open up a terminal window and execute the following command:
+Open up a terminal window and execute the following script:
 
     setup.sh
 
@@ -38,10 +40,22 @@ Should errors arise of not having permissions to run docker, try the following c
 
 ## Windows
 
-Open up a terminal window and execute the following command:
+Open up a terminal window and execute the following script:
 
     setup.bat
-    
+
+# Configuration
+
+Copy provided sample file:
+
+    env.txt.sample
+
+to a new file with a meaningful name, for example:
+
+    env-milano.txt
+
+and edit this new file, setting all needed parameters (see comments inside sample file).
+
 # Create database
 
 Open up a terminal window and execute the following command:
@@ -62,7 +76,7 @@ CREATE EXTENSION hstore;
 
 ## To the container
 
-Open up a terminal window and execute the following command:
+Open up a terminal window and execute the following script:
 
 * Linux => ./file_put.sh SRC-FILE-NAME DST-FILE-NAME
 * Windows => file_put.bat SRC-FILE-NAME DST-FILE-NAME
@@ -75,7 +89,7 @@ WARNING! The destionation file will be overwritten if already present!
 
 ## From the container
 
-Open up a terminal window and execute the following command:
+Open up a terminal window and execute the following script:
 
 * Linux => ./file_get.sh SRC-FILE-NAME DST-FILE-NAME
 * Windows => file_get.bat SRC-FILE-NAME DST-FILE-NAME
@@ -86,25 +100,31 @@ by the DST-FILE-NAME path.
 
 WARNING! The destionation file will be overwritten if already present!
 
-# Advanced commands
+# Running commands
 
-The following commands can be executed by opening a shell.
+The run time container commands can be executed by opening a shell.
 
-Open up a terminal window and execute the following command:
+Open up a terminal window and execute the following script:
 
 * Linux => ./shell.sh ENV-FILE-NAME
 * Windows => shell.bat ENV-FILE-NAME
 
-This command opens up a shell into the container where advanced commands may be executed.
+This script opens up a shell into the container where run time commands may be executed.
 
-Or they can be executed directly through the "run" command.
+Or they can be executed directly using the __run__ script.
 
-Open up a terminal window and execute the following command:
+Open up a terminal window and execute the following script:
 
 * Linux => ./run.sh ENV-FILE-NAME COMMAND-NAME ARGS
 * Windows => run.bat ENV-FILE-NAME COMMAND-NAME ARGS
 
-This command runs the specified command __inside__ the container.
+This script runs the specified run time command "COMMAND-NAME" __inside__ the container.
+
+# Run time commands
+
+These commands are run __inside__ the container, either by opening a shell into it and then running them, or by using the __run__ script, as already described.
+
+Note that run time commands, unless specified, does NOT take any command line arguments, because all relevant parameters are already set by means of the env file specified while opening the container shell (__shell__ script), or running them (__run__ script).
 
 ## database_create.sh
 
@@ -155,7 +175,7 @@ not just the differences.
 
 ## osmosis_load.sh
 
-Load area data it into the PostGIS database, replacing previous content.
+Load area data into the PostGIS database in osmosis format, replacing previous content.
 
 For an area as large as a big city (i.e. Milano), it will need roughly half an hour each time,
 because the loading of area data into PostGIS database will always take the same amount of time,
@@ -170,64 +190,56 @@ Delete area data previously loaded into the PostGIS database.
 
 Execute a custom .SQL file into the PostGIS database.
 
-The file must have been previously copied to the container using the __file_put__ command.
+The file must have been previously copied to the container using the __file_put__ script.
 
-First parameter of this command must the be the file name.
+First command line argument of this command must the be the file name.
 
-Second parameter can be "1" if PostGIS super user credentials are needed to run the .SQL inside the file.
+Second command line argument can be "1" if PostGIS super user credentials are needed to run the .SQL inside the file (i.e. if any "privileged" SQL is issued, the "1" command line argument MUST be specified, and the __SUPER_USER__ and __SUPER_PASSWORD__ parameters MUST be set inside the env file).
 
-# Osmosis
+For example:
 
-## Initialize database
+    Windows
+    file_put.bat my_custom.sql my_custom.sql
+    run.bat ENV-FILE-NAME postgis_customsql.sh my_custom.sql
+    OR
+    run.bat ENV-FILE-NAME postgis_customsql.sh my_custom.sql 1
 
-Open up a terminal window and execute the following command:
+    Linux
+    ./file_put.sh my_custom.sql my_custom.sql
+    ./run.sh ENV-FILE-NAME postgis_customsql.sh my_custom.sql
+    OR
+    ./run.sh ENV-FILE-NAME postgis_customsql.sh my_custom.sql 1
 
-* Linux => ./run.sh ENV-FILE-NAME osmosis_init.sh
-* Windows => run.bat ENV-FILE-NAME osmosis_init.sh
+## pgrouting_load.sh
 
-If database is already initialized it will not be initialized again.
+Load area data into the PostGIS database in pgRouting format, replacing previous content.
 
-## Update database
+A transport "mode" must be specified as the first parameter, that correspond with the suffix of one __mapconfig__ file, previously copied into the run time container with the __file_put__ script.
 
-Open up a terminal window and execute the following command:
+For example:
 
-* Linux => ./run.sh ENV-FILE-NAME osmosis_ensure.sh
-* Windows => run.bat ENV-FILE-NAME osmosis_ensure.sh
+    Windows
+    file_put.bat mapconfig_car.xml mapconfig_car.xml
+    run.bat ENV-FILE-NAME pgrouting_load.sh car
 
-Every time this command is executed, it will carry on every action that is needed
-to update an area date inside the PostGIS database.
+    Linux
+    ./file_put.sh mapconfig_car.xml mapconfig_car.xml
+    ./run.sh ENV-FILE-NAME pgrouting_load.sh car
 
-This means dowloading base data from OSM, cutting out area boundaries, updating area data to current timestamp and replacing database content with updated area data.
+Note that for pgRouting to work, following values MUST be specified inside the env file:
 
-All actions are executed only if and when needed.
-
-This command can be added as a crontab on Linux or as a Planned operation on Windows,
-but it's running frequency must be adjusted so that each invocation has sufficient time to complete
-before the next one starts.
-
-For an area as large as a big city (i.e. Milano), it will need roughly half an hour each time,
-because the loading of area data into PostGIS database will always take the same amount of time,
-even if there are small changes, because each time the entire data is loaded,
-not just the differences.
-
-# pgRouting
-
-## Configuration files
-
-Open up a terminal window and execute the following command:
-
-* Linux => ./file_put.sh SRC-CONF-FILE-NAME DST-CONF-FILE-NAME
-* Windows => file_put.bat SRC-CONF-FILE-NAME DST-CONF-FILE-NAME
-
-for each osm2pgrouting configuration file that is needed.
-
-The convention is to name configuration files after the transportation mode they are tailored to,
-for example:
-
-* Linux => ./file_put.sh mapconfig_car.xml mapconfig_car.xml
-* Windows => file_put.bat mapconfig_car.xml mapconfig_car.xml
+    OSMUPDATE_WHAT=BASE
+    OSMCUT=PRESERVE
 
 # Examples
 
 The __examples__ directory contains a few example environments, suitable for common situations.
 See their respective __README__ for details.
+
+# License considerations
+
+The license of this repository only covers the content of the repository itself.
+
+This repository does not distribute any software.
+
+Upon creation of container images, several software packages are retrieved and used, and each one of them may have a different license that you (the user of this repository) must obey to.
