@@ -42,6 +42,9 @@ RUN chmod ugo+x,o= /usr/local/bin/osm2pgrouting
 # Install PostgreSQL client tools
 RUN apt-get install postgresql-client -y
 
+# Install GDAL binaries (needed for ogr2ogr)
+RUN apt-get install gdal-bin -y
+
 # Execute installation steps inside container and then remove installation script
 WORKDIR /
 COPY install.sh .
