@@ -9,6 +9,7 @@ RUN apt-get install nano -y
 RUN apt-get install iputils-ping -y
 RUN apt-get install net-tools -y
 RUN apt-get install dos2unix -y
+RUN apt-get install zip -y
 
 # This MUST be equal to the mounting points of "amat-osmtools-data" volume 
 # that is specified on the command line when running containers
