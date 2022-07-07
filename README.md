@@ -100,14 +100,14 @@ by the DST-FILE-NAME path.
 
 WARNING! The destionation file will be overwritten if already present!
 
-# Script copying
+# Command copying
 
 ## To the container
 
 Open up a terminal window and execute the following script:
 
-* Linux => ./script_put.sh SRC-FILE-NAME DST-FILE-NAME
-* Windows => script_put.bat SRC-FILE-NAME DST-FILE-NAME
+* Linux => ./command_put.sh SRC-FILE-NAME DST-FILE-NAME
+* Windows => command_put.bat SRC-FILE-NAME DST-FILE-NAME
 
 The SRC-FILE-NAME must specify the path to a file accessible from the local machine,
 that will be copied to the container into the "/amat-tools/script" directory
@@ -115,7 +115,7 @@ with the specified DST-FILE-NAME name.
 
 WARNING! The destionation file will be overwritten if already present!
 
-Once copied into the container, a script can be executed like any of the script herein provided.
+Once copied into the container, a command can be executed like any of the "built-in" commands provided with this repository (i.e. from the container shell or using the __run__ script).
 
 # Running commands
 
