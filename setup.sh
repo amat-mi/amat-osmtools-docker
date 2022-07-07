@@ -21,3 +21,6 @@ rm container/osm2pgrouting
 
 # Create volume for persistent data inside container (NOT shared with host machine)
 docker volume create amat-osmtools-data
+
+# Create volume for persistent scripts inside container (NOT shared with host machine)
+docker volume create amat-osmtools-script
