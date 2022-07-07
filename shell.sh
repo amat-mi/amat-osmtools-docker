@@ -1,3 +1,3 @@
 #!/bin/bash
 
-docker run --network host --env-file $1 -it --rm -v amat-osmtools-data:/amat-osmtools-data amat-osmtools:2.2.1
+docker run --network host --env-file $1 -it --rm -v amat-osmtools-data:/amat-osmtools-data -v amat-osmtools-script:/amat-osmtools/script amat-osmtools:2.2.1
